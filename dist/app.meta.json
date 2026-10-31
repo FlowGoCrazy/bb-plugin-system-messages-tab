@@ -9,6 +9,7 @@
     "pluginSdkVersion": "0.6.94"
   },
   "runtimeSlots": [
-    "pluginSdkApp"
+    "pluginSdkApp",
+    "react"
   ]
 }

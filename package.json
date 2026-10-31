@@ -2,7 +2,7 @@
   "name": "bb-plugin-system-messages-tab",
   "version": "0.1.0",
   "type": "module",
-  "description": "Moves [bb system] notices and messages from other agent threads out of \"Your messages\" into a \"System messages\" tab.",
+  "description": "Moves [bb system] notices and messages from other threads out of \"Your messages\" into their own tab, and dates every outline entry.",
   "license": "MIT",
   "keywords": [
     "bb-plugin",
@@ -15,7 +15,7 @@
   },
   "bb": {
     "name": "System Messages Tab",
-    "description": "Moves [bb system] notices and messages from other agent threads out of \"Your messages\" into a \"System messages\" tab.",
+    "description": "Moves [bb system] notices and messages from other threads out of \"Your messages\" into their own tab, and dates every outline entry.",
     "branding": {
       "icon": "Bell"
     },
@@ -30,17 +30,20 @@
   },
   "devDependencies": {
     "@get-bb/plugin-sdk": "0.6.94",
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.7.0",
-    "@types/better-sqlite3": "^7.6.12",
     "better-sqlite3": "^12.0.0",
-    "hono": "^4.11.9"
+    "hono": "^4.11.9",
+    "typescript": "^5.7.0"
   },
   "author": "FlowGoCrazy",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/FlowGoCrazy/bb-plugin-system-messages-tab.git"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
   }
 }

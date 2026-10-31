@@ -24,6 +24,10 @@ so `app.tsx` registers a content script that:
   message's header for a sender chip, so the rendered text lacks it),
 - hides list entries with a `data-smt-hidden` attribute: system entries under
   **Your messages**, everything else under **System messages**,
+- puts a date-and-time line above every entry in all three tabs
+  (`Today, 2:34 PM`, `Yesterday, 22:10`, `Oct 3, 9:15 AM`),
+- replaces the **Agent** chip the outline shows for a sender thread the app
+  has not loaded with that thread's real title,
 - repaints BB's **Your messages** button as unselected while
   **System messages** is in view (that tab filters BB's own "Your messages"
   list).
@@ -32,7 +36,15 @@ Disposal removes every node, attribute, class change, listener and style it
 added. If a BB update changes the outline's markup, the script finds nothing to
 change and the outline keeps working unmodified.
 
-`lib/classify.ts` holds the rule for what counts as a system message.
+The outline carries no times and only knows titles of threads already in the
+app's cache, so `server.ts` exposes one RPC, `outline_meta`, that reads the
+thread's event log (`client/turn/requested` and agent-message `item/started`
+events) incrementally and returns times keyed by event seq and item id, plus
+sender thread titles. A small `experimental_appOverlay` component hands the
+RPC client to the content script.
+
+`lib/classify.ts` holds the rule for what counts as a system message;
+`lib/format.ts` formats times and maps outline ids to event-log keys.
 
 ## Develop
 
