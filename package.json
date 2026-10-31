@@ -2,7 +2,7 @@
   "name": "bb-plugin-system-messages-tab",
   "version": "0.1.0",
   "type": "module",
-  "description": "Moves [bb system] notices out of \"Your messages\" in the thread outline and into their own \"System\" tab.",
+  "description": "Moves [bb system] notices and messages from other agent threads out of \"Your messages\" into a \"System messages\" tab.",
   "license": "MIT",
   "keywords": [
     "bb-plugin",
@@ -15,7 +15,7 @@
   },
   "bb": {
     "name": "System Messages Tab",
-    "description": "Moves [bb system] notices out of \"Your messages\" in the thread outline and into their own \"System\" tab.",
+    "description": "Moves [bb system] notices and messages from other agent threads out of \"Your messages\" into a \"System messages\" tab.",
     "branding": {
       "icon": "Bell"
     },

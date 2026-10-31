@@ -1,14 +1,20 @@
 // Which entries of BB's "Your messages" outline are not really the user's.
 //
-// BB delivers its own notices (child thread finished, failed, was
-// interrupted, ...) to the agent as user turns whose text starts with
-// "[bb system]", so the thread outline lists them under "Your messages".
+// BB delivers two kinds of messages to the agent as user turns, so the
+// thread outline lists them under "Your messages":
+// - its own notices (child thread finished, failed, was interrupted, ...),
+//   whose text starts with "[bb system]";
+// - messages from other agent threads (`bb thread tell`), whose text starts
+//   with "[bb message from thread:<id>]". The outline strips that header and
+//   shows the sender thread as a chip instead.
 
 export const SYSTEM_PREFIX = "[bb system]";
+const THREAD_MESSAGE_HEADER = /^\[bb message from thread:[^;\]\s]+(?:;[^\]]*)?\]/;
 
-/** True when an outline entry's text is a BB system notice. */
+/** True when an outline entry's full text did not come from the user. */
 export function isSystemLabel(text: string | null | undefined): boolean {
-  return (text ?? "").trimStart().startsWith(SYSTEM_PREFIX);
+  const trimmed = (text ?? "").trimStart();
+  return trimmed.startsWith(SYSTEM_PREFIX) || THREAD_MESSAGE_HEADER.test(trimmed);
 }
 
 export type Tab = "user" | "system";

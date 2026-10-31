@@ -2,27 +2,33 @@
 //
 // BB's thread outline (the rail on the right of a thread, which opens a
 // popover with "Agent messages" and "Your messages" tabs) lists BB's own
-// "[bb system] ..." notices under "Your messages", because BB delivers them
-// to the agent as user turns. This plugin adds a third "System" tab that
-// holds those notices and hides them from "Your messages".
+// "[bb system] ..." notices and messages from other agent threads under
+// "Your messages", because BB delivers both to the agent as user turns. This
+// plugin adds a third "System messages" tab that holds them and hides them
+// from "Your messages".
 //
 // The Plugin SDK has no slot for the outline, so a content script works on
 // the rendered popover: it appends one button to the tab row, hides list
 // entries with an attribute, and repaints the "Your messages" button while
-// "System" is selected. BB keeps owning its own tab state; the "System" tab
+// "System messages" is selected. BB keeps owning its own tab state; the tab
 // rides on top of BB's "Your messages" list, which already holds every entry
 // this plugin sorts. Disposal removes every node, attribute, class change,
 // listener and style the plugin added.
 //
 // A BB update can change the outline's markup. The plugin then finds nothing
 // to change and the outline keeps working as BB ships it.
+//
+// Each entry's full text comes from React's props for the entry, because the
+// outline replaces a thread message's "[bb message from thread:...]" header
+// with a sender chip; the rendered text is the fallback.
 import { definePluginApp } from "@get-bb/plugin-sdk/app";
 import { isSystemLabel, isVisible, type Tab } from "./lib/classify";
 
 const TOC_SELECTOR = "[data-thread-toc]";
 const PANEL_SELECTOR = '[id^="thread-toc-panel-"]';
 const USER_TAB_LABEL = "Your messages";
-const SYSTEM_TAB_LABEL = "System";
+const SYSTEM_TAB_LABEL = "System messages";
+const MAX_FIBER_DEPTH = 6;
 
 const TAB_ATTR = "data-smt-tab";
 const HIDDEN_ATTR = "data-smt-hidden";
@@ -35,12 +41,39 @@ const TAB_BASE =
 const TAB_ACTIVE = ["bg-state-hover", "text-foreground"];
 const TAB_INACTIVE = ["text-muted-foreground", "hover:bg-state-hover"];
 
-// BB's two tabs share the row equally; a third equal tab would wrap
-// "Agent messages", so the added one only takes the width of its label.
+// BB sizes the popover for two tabs. With a third, widen it so all three
+// labels fit on one line.
 const STYLE = `
 [${HIDDEN_ATTR}] { display: none !important; }
-button[${TAB_ATTR}] { flex: 0 0 auto; padding: 0 10px; }
+${PANEL_SELECTOR}:has(button[${TAB_ATTR}]) { width: 24rem; }
+${PANEL_SELECTOR}:has(button[${TAB_ATTR}]) > * > :first-child > button { white-space: nowrap; padding: 0 8px; }
 `;
+
+type Fiber = { memoizedProps?: unknown; return?: Fiber | null };
+
+function fiberOf(element: Element): Fiber | null {
+  for (const key of Object.keys(element)) {
+    if (key.startsWith("__reactFiber$")) {
+      return (element as unknown as Record<string, Fiber>)[key] ?? null;
+    }
+  }
+  return null;
+}
+
+/** The entry's full outline label, from the component that renders it. */
+function readLabel(item: Element): string | null {
+  const inner = item.querySelector("button span span") ?? item.querySelector("button span");
+  let fiber = inner ? fiberOf(inner) : null;
+  for (let depth = 0; fiber && depth < MAX_FIBER_DEPTH; depth++) {
+    const props = fiber.memoizedProps;
+    if (props && typeof props === "object" && "item" in props) {
+      const label = (props as { item?: { label?: unknown } }).item?.label;
+      if (typeof label === "string") return label;
+    }
+    fiber = fiber.return ?? null;
+  }
+  return null;
+}
 
 type Parts = {
   tabRow: Element;
@@ -90,6 +123,8 @@ function mountSystemTab(signal: AbortSignal): () => void {
   // the thread view, so both survive the popover closing and reopening.
   const tabs = new WeakMap<Element, Tab>();
   const hasSystem = new WeakMap<Element, boolean>();
+  // An entry element keeps its label for life; read React's tree once per entry.
+  const labels = new WeakMap<Element, string>();
   let frame = 0;
   let forwarding = false;
 
@@ -105,7 +140,12 @@ function mountSystemTab(signal: AbortSignal): () => void {
 
       let systemCount = 0;
       for (const item of items) {
-        const system = isSystemLabel(item.textContent);
+        let label = labels.get(item);
+        if (label === undefined) {
+          label = readLabel(item) ?? item.textContent ?? "";
+          labels.set(item, label);
+        }
+        const system = isSystemLabel(label);
         if (system) systemCount += 1;
         const hide = showingUser && !isVisible(tab, system);
         if (hide !== item.hasAttribute(HIDDEN_ATTR)) item.toggleAttribute(HIDDEN_ATTR, hide);
@@ -134,7 +174,7 @@ function mountSystemTab(signal: AbortSignal): () => void {
       }
       if (showingUser) {
         // BB still considers "Your messages" selected; show it as unselected
-        // while the "System" tab is the one in view.
+        // while "System messages" is the tab in view.
         paint(userButton, tab === "user");
         if (!userButton.hasAttribute(PAINTED_ATTR)) userButton.setAttribute(PAINTED_ATTR, "");
       }
@@ -156,7 +196,8 @@ function mountSystemTab(signal: AbortSignal): () => void {
     if (!parts || button.parentElement !== parts.tabRow) return;
     if (button.hasAttribute(TAB_ATTR)) {
       tabs.set(toc, "system");
-      // "System" filters BB's "Your messages" list, so switch BB to it first.
+      // "System messages" filters BB's "Your messages" list, so switch BB to
+      // it first.
       if (parts.userButton.getAttribute("aria-pressed") !== "true") {
         forwarding = true;
         try {
