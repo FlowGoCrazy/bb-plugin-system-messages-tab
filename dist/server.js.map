@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": ["../../server.ts"],
+  "mappings": ";;;;;;+EAMA,eAAOA,EAA8BC,EAAiB,CACpDA,EAAG,IAAI,KAAK,QAAQ,EACpBA,EAAG,UAAU,IAAMA,EAAG,IAAI,KAAK,UAAU,CAAC,CAC5C,CAH8BC,EAAAF,EAAA",
+  "names": ["plugin", "bb", "__name"]
+}

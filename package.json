@@ -1,0 +1,46 @@
+{
+  "name": "bb-plugin-system-messages-tab",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Moves [bb system] notices out of \"Your messages\" in the thread outline and into their own \"System\" tab.",
+  "license": "MIT",
+  "keywords": [
+    "bb-plugin",
+    "chat",
+    "navigation"
+  ],
+  "engines": {
+    "bb": ">=0.48",
+    "bbPluginSdk": ">=0.6.94"
+  },
+  "bb": {
+    "name": "System Messages Tab",
+    "description": "Moves [bb system] notices out of \"Your messages\" in the thread outline and into their own \"System\" tab.",
+    "branding": {
+      "icon": "Bell"
+    },
+    "server": "./server.ts",
+    "app": "./app.tsx",
+    "skills": []
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types test/*.test.ts",
+    "build": "bb plugin build ."
+  },
+  "devDependencies": {
+    "@get-bb/plugin-sdk": "0.6.94",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0",
+    "@types/better-sqlite3": "^7.6.12",
+    "better-sqlite3": "^12.0.0",
+    "hono": "^4.11.9"
+  },
+  "author": "FlowGoCrazy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FlowGoCrazy/bb-plugin-system-messages-tab.git"
+  }
+}
