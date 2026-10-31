@@ -13,18 +13,25 @@
 import { defineRpcContract, type BbPluginApi } from "@get-bb/plugin-sdk";
 import { z } from "zod";
 
+const outlineMetaSchema = z.object({
+  /** Epoch ms of each user turn, keyed by its event seq. */
+  userTimes: z.record(z.string(), z.number()),
+  /** Epoch ms each agent message started, keyed by its item id. */
+  itemTimes: z.record(z.string(), z.number()),
+  /** Title of each thread that sent this thread a message, keyed by thread id. */
+  senderTitles: z.record(z.string(), z.string()),
+});
+export type OutlineMeta = z.infer<typeof outlineMetaSchema>;
+
 export const rpcContract = defineRpcContract({
   outline_meta: {
     input: z.object({ threadId: z.string().regex(/^thr_[a-z0-9]+$/) }),
-    output: z.object({
-      userTimes: z.record(z.string(), z.number()),
-      itemTimes: z.record(z.string(), z.number()),
-      senderTitles: z.record(z.string(), z.string()),
-    }),
+    output: outlineMetaSchema,
   },
 });
 
-const PAGE_SIZE = 100; // the events API maximum
+/** The largest page the thread events API returns. */
+const PAGE_SIZE = 100;
 const MAX_CACHED_THREADS = 20;
 
 type ThreadMeta = {
@@ -84,8 +91,8 @@ export default async function plugin(bb: BbPluginApi) {
     if (titles.has(threadId)) return titles.get(threadId) ?? null;
     let title: string | null = null;
     try {
-      const thread = (await bb.sdk.threads.get({ threadId })) as { title?: unknown };
-      title = typeof thread.title === "string" && thread.title.trim() !== "" ? thread.title : null;
+      const thread = await bb.sdk.threads.get({ threadId });
+      title = thread.title?.trim() ? thread.title : null;
     } catch {
       // Deleted or unreadable thread: keep BB's own "Agent" label.
     }

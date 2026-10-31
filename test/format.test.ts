@@ -6,9 +6,15 @@ const now = new Date(2026, 9, 31, 14, 0);
 
 test("labels today, yesterday, this year and older", () => {
   assert.equal(formatLabel(new Date(2026, 9, 31, 9, 5).getTime(), now, "en-US"), "Today, 9:05 AM");
-  assert.equal(formatLabel(new Date(2026, 9, 30, 22, 10).getTime(), now, "en-US"), "Yesterday, 10:10 PM");
+  assert.equal(
+    formatLabel(new Date(2026, 9, 30, 22, 10).getTime(), now, "en-US"),
+    "Yesterday, 10:10 PM",
+  );
   assert.equal(formatLabel(new Date(2026, 9, 3, 9, 15).getTime(), now, "en-US"), "Oct 3, 9:15 AM");
-  assert.equal(formatLabel(new Date(2025, 9, 3, 9, 15).getTime(), now, "en-US"), "Oct 3, 2025, 9:15 AM");
+  assert.equal(
+    formatLabel(new Date(2025, 9, 3, 9, 15).getTime(), now, "en-US"),
+    "Oct 3, 2025, 9:15 AM",
+  );
 });
 
 test("follows a 24-hour locale", () => {
@@ -17,7 +23,10 @@ test("follows a 24-hour locale", () => {
 
 test("yesterday crosses month boundaries", () => {
   const first = new Date(2026, 10, 1, 8, 0);
-  assert.equal(formatLabel(new Date(2026, 9, 31, 23, 0).getTime(), first, "en-GB"), "Yesterday, 23:00");
+  assert.equal(
+    formatLabel(new Date(2026, 9, 31, 23, 0).getTime(), first, "en-GB"),
+    "Yesterday, 23:00",
+  );
 });
 
 test("finds the time key in outline ids", () => {
