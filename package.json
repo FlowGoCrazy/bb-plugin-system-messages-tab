@@ -1,8 +1,8 @@
 {
   "name": "bb-plugin-system-messages-tab",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Moves [bb system] notices and messages from other threads out of \"Your messages\" into their own tab, and dates every outline entry.",
+  "description": "Moves [bb system] notices and messages from other threads out of \"Your messages\" into their own tab, dates every outline entry, and lists entries newest first.",
   "license": "MIT",
   "keywords": [
     "bb-plugin",
@@ -15,7 +15,7 @@
   },
   "bb": {
     "name": "System Messages Tab",
-    "description": "Moves [bb system] notices and messages from other threads out of \"Your messages\" into their own tab, and dates every outline entry.",
+    "description": "Moves [bb system] notices and messages from other threads out of \"Your messages\" into their own tab, dates every outline entry, and lists entries newest first.",
     "branding": {
       "icon": "Bell"
     },

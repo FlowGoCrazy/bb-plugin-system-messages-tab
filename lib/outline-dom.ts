@@ -25,6 +25,8 @@ export type OutlineParts = {
   threadId: string;
   tabRow: Element;
   userButton: HTMLButtonElement;
+  /** The entry list; its parent is the element that scrolls. */
+  list: HTMLUListElement | null;
   items: HTMLLIElement[];
 };
 
@@ -42,7 +44,7 @@ export function findParts(toc: Element): OutlineParts | null {
   const items = list
     ? Array.from(list.children).filter((child) => child instanceof HTMLLIElement)
     : [];
-  return { threadId: panel.id.slice(PANEL_ID_PREFIX.length), tabRow, userButton, items };
+  return { threadId: panel.id.slice(PANEL_ID_PREFIX.length), tabRow, userButton, list, items };
 }
 
 export function isPressed(button: Element): boolean {

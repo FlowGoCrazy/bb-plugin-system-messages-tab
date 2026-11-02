@@ -5,6 +5,8 @@ A BB plugin for the thread outline (the rail on the right of a thread). It:
 - adds a **System messages** tab and moves BB's `[bb system]` notices and
   messages from other agent threads there, out of **Your messages**;
 - puts a date-and-time line above every outline entry, in all three tabs;
+- lists entries newest first in every tab, and opens each tab scrolled to the
+  newest entry;
 - shows the real sender thread title where the outline would show a bare
   **Agent** chip.
 
@@ -33,7 +35,12 @@ script that works on the rendered popover:
   repainted as unselected while it is in view;
 - it writes each entry's time into a `data-smt-time` attribute, which a
   stylesheet renders above the entry;
-- it renames **Agent** sender chips to the thread's title.
+- it renames **Agent** sender chips to the thread's title;
+- it marks the entry list with a `data-smt-newest-first` attribute, which a
+  stylesheet turns into `flex-direction: column-reverse`, so the newest entry is
+  on top without reordering React's DOM. BB scrolls the entry for the message in
+  view into sight when the popover opens, so the script scrolls the list back to
+  the top once each time a tab comes into view.
 
 Each entry's id and full label come from React's props, because the outline
 replaces a thread message's header with the sender chip. Disposal removes every

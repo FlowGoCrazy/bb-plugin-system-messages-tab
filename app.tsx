@@ -7,6 +7,7 @@
 // - adds a "System messages" tab that holds them and hides them from
 //   "Your messages";
 // - puts a date-and-time line above every entry, in all three tabs;
+// - lists entries newest first, and opens each tab scrolled to the newest;
 // - replaces the "Agent" chip BB shows for sender threads the app has not
 //   loaded with the thread's real title.
 //
@@ -16,6 +17,10 @@
 // Times and sender titles come from the backend (server.ts), whose RPC client
 // a small app-wide overlay hands to the content script. Disposal removes
 // every node, attribute, class change, listener and style the plugin added.
+//
+// Newest-first is a CSS column-reverse on BB's list, so React's own DOM order
+// is untouched. BB scrolls the entry for the message in view into sight when
+// the popover opens; the plugin scrolls back to the top once per opened tab.
 import { useEffect } from "react";
 import { definePluginApp, useRpc } from "@get-bb/plugin-sdk/app";
 import type { OutlineMeta, rpcContract } from "./server";
@@ -40,6 +45,7 @@ const SYSTEM_TAB_LABEL = "System messages";
 const HIDDEN_ATTR = "data-smt-hidden";
 const PAINTED_ATTR = "data-smt-painted";
 const TIME_ATTR = "data-smt-time";
+const NEWEST_FIRST_ATTR = "data-smt-newest-first";
 const STYLE_ID = "bb-plugin-system-messages-tab-style";
 /** How long to wait before asking again for times of entries still missing one. */
 const REFETCH_MS = 5_000;
@@ -52,6 +58,7 @@ const RENAMED_PRUNE_SIZE = 500;
 // labels fit on one line.
 const STYLE = `
 [${HIDDEN_ATTR}] { display: none !important; }
+ul[${NEWEST_FIRST_ATTR}] { flex-direction: column-reverse; }
 ${PANEL_SELECTOR}:has(button[${TAB_ATTR}]) { width: 24rem; }
 ${PANEL_SELECTOR}:has(button[${TAB_ATTR}]) > * > :first-child > button {
   white-space: nowrap;
@@ -107,6 +114,9 @@ function mountOutline(signal: AbortSignal): () => void {
   // An entry element keeps its id and label for life; read React's tree once.
   const entries = new WeakMap<Element, Entry>();
   const metas = new Map<string, MetaState>();
+  // Per entry list, the tab it last showed. BB renders a new list each time
+  // the popover opens, so a missing or different value means a fresh view.
+  const views = new WeakMap<Element, string>();
   // Chip text nodes this plugin renamed, with BB's original text.
   const renamed = new Map<Text, string>();
   let frame = 0;
@@ -183,6 +193,23 @@ function mountOutline(signal: AbortSignal): () => void {
     }
   };
 
+  /** Newest entries first, scrolled to the top whenever a tab comes into view. */
+  const orderNewestFirst = (toc: Element, { list, items }: OutlineParts, showingUser: boolean) => {
+    if (!list) return;
+    setAttr(list, NEWEST_FIRST_ATTR, "");
+    const scroller = list.parentElement;
+    if (!scroller || items.length === 0) return;
+    const view = showingUser ? (tabs.get(toc) ?? "user") : "agent";
+    if (views.get(list) === view) return;
+    views.set(list, view);
+    scroller.scrollTop = 0;
+    // BB scrolls the entry in view into sight from an effect that can run
+    // after this frame; scroll back to the top once it has.
+    requestAnimationFrame(() => {
+      if (!signal.aborted) scroller.scrollTop = 0;
+    });
+  };
+
   /** Time line above each entry, and real titles on "Agent" sender chips. */
   const decorate = ({ threadId, items }: OutlineParts): void => {
     if (items.length === 0) return;
@@ -224,6 +251,7 @@ function mountOutline(signal: AbortSignal): () => void {
       const showingUser = isPressed(parts.userButton);
       sortEntries(toc, parts, showingUser);
       syncTabs(toc, parts, showingUser);
+      orderNewestFirst(toc, parts, showingUser);
       decorate(parts);
     }
   };
@@ -292,6 +320,9 @@ function mountOutline(signal: AbortSignal): () => void {
     }
     for (const button of document.querySelectorAll(`[${TIME_ATTR}]`)) {
       button.removeAttribute(TIME_ATTR);
+    }
+    for (const list of document.querySelectorAll(`[${NEWEST_FIRST_ATTR}]`)) {
+      list.removeAttribute(NEWEST_FIRST_ATTR);
     }
     for (const [text, original] of renamed) {
       if (text.isConnected) text.nodeValue = original;
